@@ -23,7 +23,6 @@ class Card:
             return True
         return False
 
-
     def __str__(self):
         return self.symbol + ':' + self.number
 
@@ -46,10 +45,10 @@ class Card:
                 raise ValueError
 
     def __eq__(self, other):
-        if self.number == other.number and self.symbol == other.symbol:
-            return True
-        else:
-            return False
+        return self.number == other.number and self.symbol == other.symbol
+
+    def __hash__(self):
+        return hash(str(self))
 
 
 class Deck:
@@ -126,6 +125,14 @@ class Manager:
         raise ValueError
 
 
+def check_duplicate(listOfElems):
+    # Check if given list contains any duplicates
+    for elem in listOfElems:
+        if listOfElems.count(elem) > 1:
+            return True
+    return False
+
+
 def test_gt():
 
     def print_cards(a, b):
@@ -171,12 +178,10 @@ class Player:
     # 바른 인덱스들을 입력받을 때까지 loop
     def get_right_cards(self):
         _cards = []
-        _indexes = []
         is_success = True
 
         while True:
             _cards.clear()
-            _indexes.clear()
             _str = input("제출할 카드 인덱스(ex: 1 2 3 4 5)를 입력: ")
             indexes = _str.split(" ")
 
@@ -190,16 +195,13 @@ class Player:
                     is_success = False
                     break
                 _cards.append(_card)
-                _indexes.append(i)
 
             if not is_success:
                 is_success = True
                 continue
 
             # 중복 입력 검사
-            a_length = len(_cards)
-            b_length = len(set(_indexes))
-            if not a_length == b_length:
+            if check_duplicate(_cards):
                 print("중복된 카드를 선택할 수 없습니다.")
                 continue
 
