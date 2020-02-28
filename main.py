@@ -12,6 +12,18 @@ class Card:
     def get(self):
         return self.symbol + ':' + self.number
 
+    # 자신과 other 숫자가 같은가?
+    def check_same_number(self, other):
+        if self.number == other.number:
+            return True
+        return False
+
+    def check_same_symbol(self, other):
+        if self.symbol == other.symbol:
+            return True
+        return False
+
+
     def __str__(self):
         return self.symbol + ':' + self.number
 
@@ -68,6 +80,10 @@ class Deck:
     def draw_card(self, index):
         new_card = self.deck[index]
         return new_card
+
+    # 덱 전부 비우기
+    def remove_all(self):
+        self.deck.clear()
 
 
 class Manager:
@@ -152,16 +168,121 @@ class Player:
         _card = Card(symbols[0], numbers[0])
         return _card in self.myDeck.deck
 
+    # 바른 인덱스들을 입력받을 때까지 loop
+    def get_right_cards(self):
+        _cards = []
+        _indexes = []
+        is_success = True
+
+        while True:
+            _cards.clear()
+            _indexes.clear()
+            _str = input("제출할 카드 인덱스(ex: 1 2 3 4 5)를 입력: ")
+            indexes = _str.split(" ")
+
+            for index in indexes:
+                # int 타입 변환 실패 시 처음으로, 인덱스 범위를 벗어나도 처음으로
+                try:
+                    i = int(index)
+                    _card = self.myDeck.deck[i]
+                except (ValueError, IndexError) as e:
+                    print("잘못된 인덱스 입니다. 에러: " + str(e))
+                    is_success = False
+                    break
+                _cards.append(_card)
+                _indexes.append(i)
+
+            if not is_success:
+                is_success = True
+                continue
+
+            # 중복 입력 검사
+            a_length = len(_cards)
+            b_length = len(set(_indexes))
+            if not a_length == b_length:
+                print("중복된 카드를 선택할 수 없습니다.")
+                continue
+
+            return _cards
+
     # 카드 내려놓기 시도
     def try_discard(self):
         self.myDeck.print_all()
-        _str = input("제출할 카드 인덱스(ex: 1 2 3 4 5)를 입력: ")
-        indexes = _str.split(" ")
 
-        print("---discard---")
-        for index in indexes:
-            card = self.myDeck.draw_card(int(index))
-            print(card)
+        # 내려놓을 카드들 보여주기
+        _cards = self.get_right_cards()
+        _deck = Deck()
+        for c in _cards:
+            _deck.add_card(c)
+        _deck.print_all()
+
+
+class Table:
+    def __init__(self):
+        self.myDeck = Deck()
+
+    # 카드 리스트를 받아 낼수 있는지 검사
+    # 규칙1. 테이블에 있는 카드 갯수 == 제출한 카드 갯수 일것
+    # 규칙2. 테이블보다 높은 패여야만 한다
+    def check_submit(self, _cards):
+        # 족보 검사
+
+        # 테이블에 카드가 이미 있다면
+        if self.myDeck:
+            if not self.check_rule1(_cards):
+                return False
+            if not self.check_rule2(_cards):
+                return False
+
+        return True
+
+    # 규칙1 검사
+    def check_rule1(self, _cards):
+        if self.myDeck.deck.count() == _cards.count():
+            return True
+        return False
+
+    # 규칙2 검사
+    def check_rule2(self, _cards):
+        for _card in _cards:
+            return True
+        return True
+
+
+class Rule:
+    # 2장의 카드 리스트를 받는다
+    def check_pair(self, _cards):
+
+        if not len(_cards) == 2:
+            raise ValueError
+
+        if not _cards[0].check_same_number(_cards[1]):
+            return False
+        return True
+
+    # 3장의 카드 리스트를 받는다
+    def check_triple(self, _cards):
+
+        if not len(_cards) == 3:
+            raise ValueError
+
+        if not _cards[0].check_same_number(_cards[1]):
+            return False
+        if not _cards[1].check_same_number(_cards[2]):
+            return False
+        return True
+
+    # 5장의 카드 리스트를 받는다
+    def check_five_cards(self, _cards):
+
+        if not len(_cards) == 5:
+            raise ValueError
+
+        if not _cards[0].check_same_number(_cards[1]):
+            return False
+        if not _cards[1].check_same_number(_cards[2]):
+            return False
+        return True
 
 
 def main():
