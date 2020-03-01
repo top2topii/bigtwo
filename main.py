@@ -2,6 +2,7 @@ import random
 
 symbols = ['♣', '♦', '♥', '♠']
 numbers = ['3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A', '2']
+real_nums = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K']
 
 
 class Card:
@@ -60,9 +61,9 @@ class Deck:
         return self.deck
 
     def print_all(self):
-        print("length:"+str(len(self.deck)))
+        print("length:" + str(len(self.deck)))
         for idx, i in enumerate(self.deck):
-            print("--["+str(idx)+"] " + str(i))
+            print("--[" + str(idx) + "] " + str(i))
 
     def shuffle(self):
         random.shuffle(self.deck)
@@ -123,46 +124,6 @@ class Manager:
             if player.is_first():
                 return player
         raise ValueError
-
-
-def check_duplicate(listOfElems):
-    # Check if given list contains any duplicates
-    for elem in listOfElems:
-        if listOfElems.count(elem) > 1:
-            return True
-    return False
-
-
-def test_gt():
-
-    def print_cards(a, b):
-        print('---------------------------------')
-        print('aCard:' + str(a) + '\t' + 'bCard:' + str(b))
-
-        if a > b:
-            print('aCard > bCard')
-        else:
-            print('aCard <= bCard')
-
-    # 문양 같음, 숫자 다름
-    a_card = Card(symbols[0], numbers[9])
-    b_card = Card(symbols[0], numbers[3])
-    print_cards(a_card, b_card)
-
-    # 문양 다름, 숫자 다름
-    a_card = Card(symbols[1], numbers[6])
-    b_card = Card(symbols[2], numbers[4])
-    print_cards(a_card, b_card)
-
-    # 문양 다름, 숫자 같음
-    a_card = Card(symbols[1], numbers[10])
-    b_card = Card(symbols[2], numbers[10])
-    print_cards(a_card, b_card)
-
-    # 문양 같음, 숫자 같음
-    a_card = Card(symbols[3], numbers[4])
-    b_card = Card(symbols[3], numbers[4])
-    print_cards(a_card, b_card)
 
 
 class Player:
@@ -286,9 +247,97 @@ class Rule:
             return False
         return True
 
+    # 스트레이트 검사
+    def check_straight(self, _cards):
+        _list = []
+        for _card in _cards:
+            i = real_nums.index(_card.number)
+            _list.append(i)
+        _list.sort()
+
+        if self.check_mountain(_list):
+            return True
+
+        for idx, j in enumerate(_list):
+            if idx == len(_list) - 1:
+                break
+
+            if not j + 1 == _list[idx + 1]:
+                return False
+        return True
+
+    @staticmethod
+    def check_mountain(indexes):
+        if real_nums[indexes[0]] == 'A' and \
+                real_nums[indexes[1]] == '10' and \
+                real_nums[indexes[2]] == 'J' and \
+                real_nums[indexes[3]] == 'Q' and \
+                real_nums[indexes[4]] == 'K':
+            return True
+        return False
+
+
+def check_duplicate(listOfElems):
+    # Check if given list contains any duplicates
+    for elem in listOfElems:
+        if listOfElems.count(elem) > 1:
+            return True
+    return False
+
+
+def test_gt():
+    def print_cards(a, b):
+        print('---------------------------------')
+        print('aCard:' + str(a) + '\t' + 'bCard:' + str(b))
+
+        if a > b:
+            print('aCard > bCard')
+        else:
+            print('aCard <= bCard')
+
+    # 문양 같음, 숫자 다름
+    a_card = Card(symbols[0], numbers[9])
+    b_card = Card(symbols[0], numbers[3])
+    print_cards(a_card, b_card)
+
+    # 문양 다름, 숫자 다름
+    a_card = Card(symbols[1], numbers[6])
+    b_card = Card(symbols[2], numbers[4])
+    print_cards(a_card, b_card)
+
+    # 문양 다름, 숫자 같음
+    a_card = Card(symbols[1], numbers[10])
+    b_card = Card(symbols[2], numbers[10])
+    print_cards(a_card, b_card)
+
+    # 문양 같음, 숫자 같음
+    a_card = Card(symbols[3], numbers[4])
+    b_card = Card(symbols[3], numbers[4])
+    print_cards(a_card, b_card)
+
+
+def test_straight():
+    rule = Rule()
+
+    cards = [Card('♣', 'K'), Card('♣', 'Q'), Card('♣', '10'), Card('♣', 'A'), Card('♣', 'J')]
+    print("case1:" + str(rule.check_straight(cards)))
+
+    cards = [Card('♣', 'A'), Card('♣', '2'), Card('♣', '5'), Card('♣', '3'), Card('♣', '4')]
+    print("case2:" + str(rule.check_straight(cards)))
+
+    cards = [Card('♣', '8'), Card('♣', 'Q'), Card('♣', '10'), Card('♣', 'A'), Card('♣', 'J')]
+    print("case3:" + str(rule.check_straight(cards)))
+
+    cards = [Card('♣', '2'), Card('♣', '5'), Card('♣', '3'), Card('♣', '4'), Card('♣', '6')]
+    print("case4:" + str(rule.check_straight(cards)))
+
+    cards = [Card('♣', 'K'), Card('♣', 'K'), Card('♣', '10'), Card('♣', 'K'), Card('♣', 'J')]
+    print("case5:" + str(rule.check_straight(cards)))
+
 
 def main():
     # test_gt()
+    # test_straight()
 
     player_names = ["A", "B", "C", "D"]
     manager = Manager(player_names)
