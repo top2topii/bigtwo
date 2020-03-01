@@ -276,6 +276,50 @@ class Rule:
             return True
         return False
 
+    @staticmethod
+    def check_flush(_cards):
+        for _card in _cards:
+            if not _card.symbol == _cards[0].symbol:
+                return False
+        return True
+
+    @staticmethod
+    def check_fullhouse(_cards):
+        mydic = {}
+        for _card in _cards:
+            key = _card.number
+            if key in mydic:
+                mydic[key] += 1
+            else:
+                mydic[key] = 1
+
+        # mydic의 갯수는 2개 각각의 값이 2,3
+        length = len(mydic)
+        listOfVals = list(mydic.values())
+        listOfVals.sort()
+        if length == 2 and listOfVals == [2, 3]:
+            return True
+
+        return False
+
+    @staticmethod
+    def check_fourcards(_cards):
+        mydic = {}
+        for _card in _cards:
+            key = _card.number
+            if key in mydic:
+                mydic[key] += 1
+            else:
+                mydic[key] = 1
+
+        # mydic의 갯수는 2개 각각의 값이 2,3
+        length = len(mydic)
+        listOfVals = list(mydic.values())
+        listOfVals.sort()
+        if length == 2 and listOfVals == [1, 4]:
+            return True
+
+        return False
 
 def check_duplicate(listOfElems):
     # Check if given list contains any duplicates
@@ -334,22 +378,76 @@ def test_straight():
     cards = [Card('♣', 'K'), Card('♣', 'K'), Card('♣', '10'), Card('♣', 'K'), Card('♣', 'J')]
     print("case5:" + str(rule.check_straight(cards)))
 
+def test_flush():
+    rule = Rule()
+
+    print("Flush Test---------------------------------")
+    cards = [Card('♣', 'K'), Card('♣', 'K'), Card('♦', 'K'), Card('♣', 'A'), Card('♣', 'A')]
+    print("case1:" + str(rule.check_flush(cards)))
+
+    cards = [Card('♣', 'A'), Card('♣', '2'), Card('♣', '5'), Card('♣', '3'), Card('♣', '4')]
+    print("case2:" + str(rule.check_flush(cards)))
+
+    cards = [Card('♣', '8'), Card('♣', 'Q'), Card('♣', '8'), Card('♦', 'Q'), Card('♣', 'Q')]
+    print("case3:" + str(rule.check_flush(cards)))
+
+    cards = [Card('♦', '8'), Card('♦', 'Q'), Card('♦', '8'), Card('♦', 'Q'), Card('♦', 'Q')]
+    print("case4:" + str(rule.check_flush(cards)))
+
+
+def test_fullhouse():
+    rule = Rule()
+
+    print("Fullhouse Test---------------------------------")
+    cards = [Card('♣', 'K'), Card('♣', 'K'), Card('♣', 'K'), Card('♣', 'A'), Card('♣', 'A')]
+    print("case1:" + str(rule.check_fullhouse(cards)))
+
+    cards = [Card('♣', 'A'), Card('♣', '2'), Card('♣', '5'), Card('♣', '3'), Card('♣', '4')]
+    print("case2:" + str(rule.check_fullhouse(cards)))
+
+    cards = [Card('♣', 'Q'), Card('♣', 'Q'), Card('♣', '8'), Card('♣', 'Q'), Card('♣', 'Q')]
+    print("case3:" + str(rule.check_fullhouse(cards)))
+
+    cards = [Card('♣', '8'), Card('♣', 'Q'), Card('♣', '8'), Card('♣', 'Q'), Card('♣', 'Q')]
+    print("case4:" + str(rule.check_fullhouse(cards)))
+
+
+def test_fourcards():
+    rule = Rule()
+
+    print("Fullhouse Test---------------------------------")
+    cards = [Card('♣', 'K'), Card('♣', 'K'), Card('♣', 'K'), Card('♣', 'A'), Card('♣', 'A')]
+    print("case1:" + str(rule.check_fourcards(cards)))
+
+    cards = [Card('♣', 'A'), Card('♣', '2'), Card('♣', '5'), Card('♣', '3'), Card('♣', '4')]
+    print("case2:" + str(rule.check_fourcards(cards)))
+
+    cards = [Card('♣', 'Q'), Card('♣', 'Q'), Card('♣', '8'), Card('♣', 'Q'), Card('♣', 'Q')]
+    print("case3:" + str(rule.check_fourcards(cards)))
+
+    cards = [Card('♣', '8'), Card('♣', 'Q'), Card('♣', '8'), Card('♣', 'Q'), Card('♣', 'Q')]
+    print("case4:" + str(rule.check_fourcards(cards)))
+
 
 def main():
     # test_gt()
     # test_straight()
+    # test_fullhouse()
+    # test_flush()
+    # test_fourcards()
 
-    player_names = ["A", "B", "C", "D"]
-    manager = Manager(player_names)
-    manager.myDeck.shuffle()
-    manager.card_distribute()
-
-    manager.show_players_deck()
-    print(manager.find_first().name)
-
-    _player = Player("E")
-    _player.myDeck.fill_full()
-    _player.try_discard()
+    # player_names = ["A", "B", "C", "D"]
+    # manager = Manager(player_names)
+    # manager.myDeck.shuffle()
+    # manager.card_distribute()
+    #
+    # manager.show_players_deck()
+    # print(manager.find_first().name)
+    #
+    # _player = Player("E")
+    # _player.myDeck.fill_full()
+    # _player.try_discard()
+    pass
 
 
 if __name__ == '__main__':
