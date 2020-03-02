@@ -9,6 +9,7 @@ class Card:
     def __init__(self, _symbol, _number):
         self.symbol = _symbol
         self.number = _number
+        self.point = numbers.index(_number) * 4 + symbols.index(_symbol)
 
     def get(self):
         return self.symbol + ':' + self.number
@@ -75,6 +76,9 @@ class Deck:
 
     def add_card(self, _card):
         self.deck.append(_card)
+
+    def add_cards(self, _cards):
+        self.deck += _cards
 
     # 카드 한장을 뽑아 반환
     def draw_card(self, index):
@@ -241,11 +245,12 @@ class Rule:
         if not len(_cards) == 5:
             raise ValueError
 
-        if not _cards[0].check_same_number(_cards[1]):
-            return False
-        if not _cards[1].check_same_number(_cards[2]):
-            return False
-        return True
+        if self.check_straight(_cards): return True
+        if self.check_flush(_cards): return True
+        if self.check_fullhouse(_cards): return True
+        if self.check_fourcards(_cards): return True
+
+        return False
 
     # 스트레이트 검사
     def check_straight(self, _cards):
@@ -321,6 +326,34 @@ class Rule:
 
         return False
 
+    # 족보에 해당하는 지 검사
+    def isInRank(self, cards):
+        length = len(cards)
+
+        if length == 1:
+            return True
+        elif length == 2:
+            return self.check_pair(cards)
+        elif length == 3:
+            return self.check_triple(cards)
+        elif length == 5:
+            return self.check_five_cards(cards)
+        else:
+            return False
+
+    # 제출이 가능한지를 검사
+    # cards_a: table, cards_b: 제출시도
+    def isHigh(self, cards_a, cards_b):
+
+        # 같은 카드 장수인가
+        if not len(cards_a) == len(cards_b):
+            return False
+
+        # 족보인가
+        if not self.isInRank(cards_b):
+            return False
+
+
 def check_duplicate(listOfElems):
     # Check if given list contains any duplicates
     for elem in listOfElems:
@@ -378,6 +411,7 @@ def test_straight():
     cards = [Card('♣', 'K'), Card('♣', 'K'), Card('♣', '10'), Card('♣', 'K'), Card('♣', 'J')]
     print("case5:" + str(rule.check_straight(cards)))
 
+
 def test_flush():
     rule = Rule()
 
@@ -429,6 +463,23 @@ def test_fourcards():
     print("case4:" + str(rule.check_fourcards(cards)))
 
 
+def test_card_sort():
+
+    deck = Deck()
+    cards = [Card('♣', 'A'), Card('♣', '2'), Card('♣', '5'), Card('♣', '3'), Card('♣', '4')]
+
+    deck.add_cards(cards)
+    deck.deck.sort(key=lambda x: x.point)
+    deck.print_all()
+
+    deck.remove_all()
+    cards = [Card('♣', '8'), Card('♦', 'Q'), Card('♦', '8'), Card('♣', 'Q'), Card('♥', 'Q')]
+
+    deck.add_cards(cards)
+    deck.deck.sort(key=lambda x: x.point)
+    deck.print_all()
+
+
 def main():
     # test_gt()
     # test_straight()
@@ -447,7 +498,8 @@ def main():
     # _player = Player("E")
     # _player.myDeck.fill_full()
     # _player.try_discard()
-    pass
+    test_card_sort()
+    # pass
 
 
 if __name__ == '__main__':
