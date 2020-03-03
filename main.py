@@ -327,7 +327,7 @@ class Rule:
         return False
 
     # 족보에 해당하는 지 검사
-    def isInRank(self, cards):
+    def is_in_rank(self, cards):
         length = len(cards)
 
         if length == 1:
@@ -341,17 +341,45 @@ class Rule:
         else:
             return False
 
+    @staticmethod
+    def is_high_straight(cards_a, cards_b):
+
+        cards_a.sort(key=lambda x: x.point, reverse=True)
+        cards_b.sort(key=lambda x: x.point, reverse=True)
+
+        a_score = (numbers.index(cards_a[0].number) + 1) * 10000 \
+            + numbers.index(cards_a[1].number) * 100 + symbols.index(cards_a[0].symbol)
+        b_score = (numbers.index(cards_b[0].number) + 1) * 10000 \
+            + numbers.index(cards_b[1].number) * 100 + symbols.index(cards_b[0].symbol)
+
+        return a_score < b_score
+
+    def is_high(self, cards_a, cards_b):
+        # 한장씩 높은 순서대로 비교
+        # TODO: 높은 카드 순서대로 비교
+
+        # fullhouse나 fourcard일 경우는 비교순서를 3장 또는 4장에서 먼저 해야됨됨
+        length = len(cards_b)
+
+        return True
+
     # 제출이 가능한지를 검사
     # cards_a: table, cards_b: 제출시도
-    def isHigh(self, cards_a, cards_b):
+    def check_submit(self, cards_a, cards_b):
+
+        # 선일 경우 테이블이 비어있을때는 무조건 OK
+        if len(cards_a) == 0:
+            return True
 
         # 같은 카드 장수인가
         if not len(cards_a) == len(cards_b):
             return False
 
         # 족보인가
-        if not self.isInRank(cards_b):
+        if not self.is_in_rank(cards_b):
             return False
+
+        return self.is_high(cards_a, cards_b)
 
 
 def check_duplicate(listOfElems):
@@ -464,7 +492,6 @@ def test_fourcards():
 
 
 def test_card_sort():
-
     deck = Deck()
     cards = [Card('♣', 'A'), Card('♣', '2'), Card('♣', '5'), Card('♣', '3'), Card('♣', '4')]
 
@@ -478,6 +505,53 @@ def test_card_sort():
     deck.add_cards(cards)
     deck.deck.sort(key=lambda x: x.point)
     deck.print_all()
+
+
+def test_is_high_straight():
+    deck = Deck()
+    rule = Rule()
+
+    cards_a = [Card('♣', 'A'), Card('♣', '2'), Card('♥', '5'), Card('♣', '3'), Card('♣', '4')]
+    cards_b = [Card('♥', 'A'), Card('♥', '2'), Card('♣', '5'), Card('♥', '3'), Card('♥', '4')]
+
+    deck.add_cards(cards_a)
+    deck.print_all()
+    deck.remove_all()
+
+    deck.add_cards(cards_b)
+    deck.print_all()
+    deck.remove_all()
+
+    result = rule.is_high_straight(cards_a, cards_b)
+    print(result)
+
+    cards_c = [Card('♣', 'A'), Card('♣', '2'), Card('♥', '5'), Card('♣', '3'), Card('♣', '4')]
+    cards_d = [Card('♥', '6'), Card('♥', '2'), Card('♣', '5'), Card('♥', '3'), Card('♥', '4')]
+
+    deck.add_cards(cards_c)
+    deck.print_all()
+    deck.remove_all()
+
+    deck.add_cards(cards_d)
+    deck.print_all()
+    deck.remove_all()
+
+    result = rule.is_high_straight(cards_c, cards_d)
+    print(result)
+
+    cards_c = [Card('♣', '6'), Card('♣', '2'), Card('♥', '5'), Card('♣', '3'), Card('♣', '4')]
+    cards_d = [Card('♥', 'A'), Card('♥', 'J'), Card('♣', 'Q'), Card('♥', 'K'), Card('♥', '10')]
+
+    deck.add_cards(cards_c)
+    deck.print_all()
+    deck.remove_all()
+
+    deck.add_cards(cards_d)
+    deck.print_all()
+    deck.remove_all()
+
+    result = rule.is_high_straight(cards_c, cards_d)
+    print(result)
 
 
 def main():
@@ -498,7 +572,8 @@ def main():
     # _player = Player("E")
     # _player.myDeck.fill_full()
     # _player.try_discard()
-    test_card_sort()
+    # test_card_sort()
+    test_is_high_straight()
     # pass
 
 
