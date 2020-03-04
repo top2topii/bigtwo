@@ -29,25 +29,25 @@ class Card:
         return self.symbol + ':' + self.number
 
     def __gt__(self, other):
-        self_number_index = numbers.index(self.number)
-        other_number_index = numbers.index(other.number)
+        return self.point < other.point
 
-        if self_number_index > other_number_index:
-            return True
-        elif self_number_index < other_number_index:
-            return False
-        else:
-            self_number_index = symbols.index(self.symbol)
-            other_number_index = symbols.index(other.symbol)
-            if self_number_index > other_number_index:
-                return True
-            elif self_number_index < other_number_index:
-                return False
-            else:
-                raise ValueError
+        # if self_number_index > other_number_index:
+        #     return True
+        # elif self_number_index < other_number_index:
+        #     return False
+        # else:
+        #     self_symbol_index = symbols.index(self.symbol)
+        #     other_symbol_index = symbols.index(other.symbol)
+        #     if self_symbol_index > other_symbol_index:
+        #         return True
+        #     elif self_symbol_index < other_symbol_index:
+        #         return False
+        #     else:
+        #         raise ValueError
 
     def __eq__(self, other):
-        return self.number == other.number and self.symbol == other.symbol
+        return self.point == other.point
+        # return self.number == other.number and self.symbol == other.symbol
 
     def __hash__(self):
         return hash(str(self))
@@ -273,11 +273,7 @@ class Rule:
 
     @staticmethod
     def check_mountain(indexes):
-        if real_nums[indexes[0]] == 'A' and \
-                real_nums[indexes[1]] == '10' and \
-                real_nums[indexes[2]] == 'J' and \
-                real_nums[indexes[3]] == 'Q' and \
-                real_nums[indexes[4]] == 'K':
+        if indexes == ['A', '10', 'J', 'Q', 'K']:
             return True
         return False
 
@@ -289,7 +285,7 @@ class Rule:
         return True
 
     @staticmethod
-    def check_fullhouse(_cards):
+    def count_same_number(_cards):
         mydic = {}
         for _card in _cards:
             key = _card.number
@@ -298,30 +294,23 @@ class Rule:
             else:
                 mydic[key] = 1
 
-        # mydic의 갯수는 2개 각각의 값이 2,3
+        # mydic 의 갯수는 2개 각각의 값이 2,3
         length = len(mydic)
-        listOfVals = list(mydic.values())
-        listOfVals.sort()
-        if length == 2 and listOfVals == [2, 3]:
+        list_values = list(mydic.values())
+        list_values.sort()
+
+        return list_values
+
+    def check_fullhouse(self, _cards):
+        list_values = self.count_same_number(_cards)
+        if len(list_values) == 2 and list_values == [2, 3]:
             return True
 
         return False
 
-    @staticmethod
-    def check_fourcards(_cards):
-        mydic = {}
-        for _card in _cards:
-            key = _card.number
-            if key in mydic:
-                mydic[key] += 1
-            else:
-                mydic[key] = 1
-
-        # mydic의 갯수는 2개 각각의 값이 2,3
-        length = len(mydic)
-        listOfVals = list(mydic.values())
-        listOfVals.sort()
-        if length == 2 and listOfVals == [1, 4]:
+    def check_fourcards(self, _cards):
+        list_values = self.count_same_number(_cards)
+        if len(list_values) == 2 and list_values == [1, 4]:
             return True
 
         return False
@@ -380,6 +369,36 @@ class Rule:
             return False
 
         return self.is_high(cards_a, cards_b)
+
+
+# 가장 많이 중복된 숫자를 돌려준다.
+# fullhouse 경우 3장의 숫자를 알려주고
+# fourcards 경우 4장의 숫자를 알려준다.
+def get_same_card_num(cards):
+    most_same = 0
+    mydic = {}
+    for card in cards:
+        key = card.number
+        if key in mydic:
+            mydic[key] += 1
+        else:
+            mydic[key] = 1
+
+    res = sorted(mydic.items(), key=lambda x: x[1], reverse=True)
+    return res[0][0]
+
+
+# num 숫자를 가진 카드중 가장 높은 카드 한장을 구한다.
+def get_highest_card(cards, num):
+
+    # 제일 낮은 카드로 초기화
+    highest_card = Card(symbols[0], numbers[0])
+
+    for card in cards:
+        if card.number == num and highest_card.point < card.point:
+            highest_card = card
+
+    return highest_card
 
 
 def check_duplicate(listOfElems):
@@ -554,6 +573,41 @@ def test_is_high_straight():
     print(result)
 
 
+def test_get_same_card_num():
+    deck = Deck()
+    rule = Rule()
+
+    cards_a = [Card('♣', 'A'), Card('♣', '5'), Card('♦', '5'), Card('♦', 'A'), Card('♥', '5')]
+    result = get_same_card_num(cards_a)
+    deck.add_cards(cards_a)
+    deck.print_all()
+    print(get_highest_card(cards_a, result))
+
+    cards_a = [Card('♣', '8'), Card('♣', '5'), Card('♥', '5'), Card('♠', '5'), Card('♦', '5')]
+    result = get_same_card_num(cards_a)
+    deck.remove_all()
+    deck.add_cards(cards_a)
+    deck.print_all()
+    print(result)
+    print(get_highest_card(cards_a, result))
+
+    cards_a = [Card('♣', '8'), Card('♥', '8')]
+    result = get_same_card_num(cards_a)
+    deck.remove_all()
+    deck.add_cards(cards_a)
+    deck.print_all()
+    print(result)
+    print(get_highest_card(cards_a, result))
+
+    cards_a = [Card('♣', 'J'), Card('♥', 'J'), Card('♦', 'J')]
+    result = get_same_card_num(cards_a)
+    deck.remove_all()
+    deck.add_cards(cards_a)
+    deck.print_all()
+    print(result)
+    print(get_highest_card(cards_a, result))
+
+
 def main():
     # test_gt()
     # test_straight()
@@ -573,7 +627,8 @@ def main():
     # _player.myDeck.fill_full()
     # _player.try_discard()
     # test_card_sort()
-    test_is_high_straight()
+    # test_is_high_straight()
+    test_get_same_card_num()
     # pass
 
 
