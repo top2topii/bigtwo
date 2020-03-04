@@ -29,7 +29,7 @@ class Card:
         return self.symbol + ':' + self.number
 
     def __gt__(self, other):
-        return self.point < other.point
+        return self.point > other.point
 
         # if self_number_index > other_number_index:
         #     return True
@@ -88,6 +88,11 @@ class Deck:
     # 덱 전부 비우기
     def remove_all(self):
         self.deck.clear()
+
+    # replace
+    def replace(self, cards):
+        self.deck.clear()
+        self.add_cards(cards)
 
 
 class Manager:
@@ -189,13 +194,17 @@ class Table:
         self.myDeck = Deck()
 
     # 카드 리스트를 받아 낼수 있는지 검사
+    # 규칙0. 선이면 어떤 카드도 낼 수 있다(족보에 해당한다면)
     # 규칙1. 테이블에 있는 카드 갯수 == 제출한 카드 갯수 일것
     # 규칙2. 테이블보다 높은 패여야만 한다
     def check_submit(self, _cards):
+
         # 족보 검사
+        if not Rule.is_in_rank(_cards):
+            return False
 
         # 테이블에 카드가 이미 있다면
-        if self.myDeck:
+        if self.myDeck.deck:
             if not self.check_rule1(_cards):
                 return False
             if not self.check_rule2(_cards):
@@ -205,20 +214,19 @@ class Table:
 
     # 규칙1 검사
     def check_rule1(self, _cards):
-        if self.myDeck.deck.count() == _cards.count():
+        if len(self.myDeck.deck) == len(_cards):
             return True
         return False
 
     # 규칙2 검사
     def check_rule2(self, _cards):
-        for _card in _cards:
-            return True
-        return True
+        return Rule.is_high(self.myDeck.deck, _cards)
 
 
 class Rule:
     # 2장의 카드 리스트를 받는다
-    def check_pair(self, _cards):
+    @staticmethod
+    def check_pair(_cards):
 
         if not len(_cards) == 2:
             raise ValueError
@@ -228,7 +236,8 @@ class Rule:
         return True
 
     # 3장의 카드 리스트를 받는다
-    def check_triple(self, _cards):
+    @staticmethod
+    def check_triple(_cards):
 
         if not len(_cards) == 3:
             raise ValueError
@@ -240,27 +249,29 @@ class Rule:
         return True
 
     # 5장의 카드 리스트를 받는다
-    def check_five_cards(self, _cards):
+    @staticmethod
+    def check_five_cards(cards):
 
-        if not len(_cards) == 5:
+        if not len(cards) == 5:
             raise ValueError
 
-        if self.check_straight(_cards): return True
-        if self.check_flush(_cards): return True
-        if self.check_fullhouse(_cards): return True
-        if self.check_fourcards(_cards): return True
+        if Rule.check_straight(cards): return True
+        if Rule.check_flush(cards): return True
+        if Rule.check_fullhouse(cards): return True
+        if Rule.check_fourcards(cards): return True
 
         return False
 
     # 스트레이트 검사
-    def check_straight(self, _cards):
+    @staticmethod
+    def check_straight(_cards):
         _list = []
         for _card in _cards:
             i = real_nums.index(_card.number)
             _list.append(i)
         _list.sort()
 
-        if self.check_mountain(_list):
+        if Rule.check_mountain(_list):
             return True
 
         for idx, j in enumerate(_list):
@@ -273,7 +284,8 @@ class Rule:
 
     @staticmethod
     def check_mountain(indexes):
-        if indexes == ['A', '10', 'J', 'Q', 'K']:
+        if indexes == [real_nums.index('A'), real_nums.index('10'),
+                       real_nums.index('J'), real_nums.index('Q'), real_nums.index('K')]:
             return True
         return False
 
@@ -301,40 +313,41 @@ class Rule:
 
         return list_values
 
-    def check_fullhouse(self, _cards):
-        list_values = self.count_same_number(_cards)
+    @staticmethod
+    def check_fullhouse(_cards):
+        list_values = Rule.count_same_number(_cards)
         if len(list_values) == 2 and list_values == [2, 3]:
             return True
 
         return False
 
-    def check_fourcards(self, _cards):
-        list_values = self.count_same_number(_cards)
+    @staticmethod
+    def check_fourcards(_cards):
+        list_values = Rule.count_same_number(_cards)
         if len(list_values) == 2 and list_values == [1, 4]:
             return True
 
         return False
 
     # 족보에 해당하는 지 검사
-    def is_in_rank(self, cards):
+    @staticmethod
+    def is_in_rank(cards):
         length = len(cards)
 
         if length == 1:
             return True
         elif length == 2:
-            return self.check_pair(cards)
+            return Rule.check_pair(cards)
         elif length == 3:
-            return self.check_triple(cards)
+            return Rule.check_triple(cards)
         elif length == 5:
-            return self.check_five_cards(cards)
+            return Rule.check_five_cards(cards)
         else:
             return False
 
+    # sort 된 cards를 받는다.
     @staticmethod
     def is_high_straight(cards_a, cards_b):
-
-        cards_a.sort(key=lambda x: x.point, reverse=True)
-        cards_b.sort(key=lambda x: x.point, reverse=True)
 
         a_score = (numbers.index(cards_a[0].number) + 1) * 10000 \
             + numbers.index(cards_a[1].number) * 100 + symbols.index(cards_a[0].symbol)
@@ -343,32 +356,75 @@ class Rule:
 
         return a_score < b_score
 
-    def is_high(self, cards_a, cards_b):
+    # sort 된 cards를 받는다.
+    @staticmethod
+    def is_high_flush(cards_a, cards_b):
+
+        # 문양만 가지고 먼저 확인한다.
+        # 문양이 같다면 숫자를 비교
+        if cards_a[0].symbol < cards_b[0].symbol:
+            return True
+        elif cards_a[0].symbol == cards_b[0].symbol:
+            return cards_a[0].number < cards_b[0].number
+
+        return False
+
+    @staticmethod
+    def is_high_as_rank(rank, cards_a, cards_b):
+
+        if rank == 1 or rank == 5:   # straight / straight flush
+            return Rule.is_high_straight(cards_a, cards_b)
+        elif rank == 2:     # flush
+            return Rule.is_high_flush(cards_a, cards_b)
+        elif rank < 5:  # fullhouse / fourcards
+            return get_same_card_num(cards_a) < get_same_card_num(cards_b)
+
+    # rule2 에 해당하기에 같은 카드 검사를 거친후 온다.
+    # 1/2/3/5 제출 장수에 따라 대응하자.
+    @staticmethod
+    def is_high(cards_a, cards_b):
+        length = len(cards_a)
+        cards_a.sort(key=lambda x: x.point, reverse=True)
+        cards_b.sort(key=lambda x: x.point, reverse=True)
+
         # 한장씩 높은 순서대로 비교
         # TODO: 높은 카드 순서대로 비교
+        # 1/2/3 일 경우
+        if length < 5:
+            if cards_a[0] < cards_b[0]:
+                return True
+            return False
 
-        # fullhouse나 fourcard일 경우는 비교순서를 3장 또는 4장에서 먼저 해야됨됨
-        length = len(cards_b)
+        # fullhouse 나 fourcards 일 경우는 비교순서를 3장 또는 4장에서 먼저 해야됨됨
+        # length = len(cards_b)
 
-        return True
-
-    # 제출이 가능한지를 검사
-    # cards_a: table, cards_b: 제출시도
-    def check_submit(self, cards_a, cards_b):
-
-        # 선일 경우 테이블이 비어있을때는 무조건 OK
-        if len(cards_a) == 0:
+        # 5장일 경우 족보의 종류를 rank 로 구분한다.
+        # straight, flush, fullhouse, fourcards, straight flush
+        # rank   1,     2,         3,         4,              5
+        rank_a = Rule.get_rank(cards_a)
+        rank_b = Rule.get_rank(cards_b)
+        if rank_b > rank_a:
             return True
-
-        # 같은 카드 장수인가
-        if not len(cards_a) == len(cards_b):
+        elif rank_a == rank_b:
+            return Rule.is_high_as_rank(rank_a, cards_a, cards_b)
+        else:
             return False
 
-        # 족보인가
-        if not self.is_in_rank(cards_b):
-            return False
-
-        return self.is_high(cards_a, cards_b)
+    @staticmethod
+    def get_rank(cards):
+        rank = 0
+        if Rule.check_straight(cards):
+            rank = 1
+        if Rule.check_flush(cards):
+            if Rule.check_straight(cards):
+                rank = 5
+            else:
+                rank = 2
+        if Rule.check_fullhouse(cards):
+            rank = 3
+        if Rule.check_fourcards(cards):
+            rank = 4
+        return rank
 
 
 # 가장 많이 중복된 숫자를 돌려준다.
@@ -608,6 +664,56 @@ def test_get_same_card_num():
     print(get_highest_card(cards_a, result))
 
 
+# 테이블에 제출할 수 있는지 검사
+def test_check_submit():
+    deck = Deck()
+    t = Table()
+    cards_a = [Card('♣', '8')]
+    cards_b = [Card('♦', '8')]
+    t.myDeck.deck = cards_a
+    deck.add_cards(cards_b)
+
+    result = t.check_submit(cards_b)
+    t.myDeck.print_all()
+    deck.print_all()
+    print(result)
+
+    cards_a = [Card('♣', '8'), Card('♦', '8')]
+    cards_b = [Card('♠', '8'), Card('♥', '8')]
+    t.myDeck.deck = cards_a
+    deck.remove_all()
+    deck.add_cards(cards_b)
+
+    result = t.check_submit(cards_b)
+    t.myDeck.print_all()
+    deck.print_all()
+    print(result)
+
+    cards_a = [Card('♣', 'K'), Card('♣', 'Q'), Card('♣', '10'), Card('♣', 'A'), Card('♣', 'J')]
+    cards_b = [Card('♣', '2'), Card('♣', '5'), Card('♣', '3'), Card('♣', '4'), Card('♣', '6')]
+    t.myDeck.replace(cards_a)
+    deck.replace(cards_b)
+
+    result = t.check_submit(cards_b)
+    print(Rule.get_rank(cards_a))
+    t.myDeck.print_all()
+    print(Rule.get_rank(cards_b))
+    deck.print_all()
+    print(result)
+
+    cards_a = [Card('♣', 'K'), Card('♣', 'Q'), Card('♣', '10'), Card('♣', 'A'), Card('♣', 'J')]
+    cards_b = [Card('♣', 'K'), Card('♣', 'K'), Card('♦', 'K'), Card('♣', 'A'), Card('♣', 'A')]
+    t.myDeck.replace(cards_a)
+    deck.replace(cards_b)
+
+    result = t.check_submit(cards_b)
+    print(Rule.get_rank(cards_a))
+    t.myDeck.print_all()
+    print(Rule.get_rank(cards_b))
+    deck.print_all()
+    print(result)
+
+
 def main():
     # test_gt()
     # test_straight()
@@ -628,7 +734,8 @@ def main():
     # _player.try_discard()
     # test_card_sort()
     # test_is_high_straight()
-    test_get_same_card_num()
+    # test_get_same_card_num()
+    test_check_submit()
     # pass
 
 
