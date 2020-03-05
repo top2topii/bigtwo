@@ -105,12 +105,55 @@ class Manager:
         for name in _player_names:
             self.players.append(Player(name))
 
-    @staticmethod
-    def greater(a, b):
-        if a > b:
-            return True
+        self.my_table = Table()
+        self.current_player_index = 0
+
+    def find_player(self, name):
+        for p in self.players:
+            if p.name == name:
+                return p
         else:
-            return False
+            raise ValueError
+
+    def game_start(self):
+        print("game start!!!")
+        self.card_distribute()
+
+        current_player_name = self.find_first().name
+
+        p = self.find_player(current_player_name)
+        self.current_player_index = self.players.index(p)
+        print("first player: " + current_player_name)
+
+    def game_run(self):
+        while True:
+            player = self.players[self.current_player_index]
+
+            print("current table:")
+            if not self.my_table.myDeck:
+                print("table is empty")
+            else:
+                self.my_table.myDeck.print_all()
+
+            print("turn of player: " + player.name)
+            print("player cards: ")
+            player.myDeck.print_all()
+
+            # TODO: 플레이어의 카드 제출 여부 검사(Pass)
+            # TODO: 모두 pass 하면 마지막 player가 선이 된다.
+            while True:
+                _cards = player.get_right_cards()
+                if self.my_table.check_submit(_cards):
+                    self.my_table.myDeck.replace(_cards)
+                    player.myDeck.deck = subtract_list(player.myDeck.deck, _cards)
+                    break
+                else:
+                    print("submission failed!")
+                    # 카드 제출 여부 재검사(Pass)
+
+            self.current_player_index += 1
+            if self.current_player_index >= len(self.players):
+                self.current_player_index = 0
 
     # 각 플레이어에게 차례대로 카드 분배
     def card_distribute(self):
@@ -177,18 +220,8 @@ class Player:
 
             return _cards
 
-    # 카드 내려놓기 시도
-    def try_discard(self):
-        self.myDeck.print_all()
 
-        # 내려놓을 카드들 보여주기
-        _cards = self.get_right_cards()
-        _deck = Deck()
-        for c in _cards:
-            _deck.add_card(c)
-        _deck.print_all()
-
-
+# 바닥에 놓진 카드 덱?
 class Table:
     def __init__(self):
         self.myDeck = Deck()
@@ -425,6 +458,10 @@ class Rule:
         if Rule.check_fourcards(cards):
             rank = 4
         return rank
+
+
+def subtract_list(xs, ys):
+    return [item for item in xs if item not in ys]
 
 
 # 가장 많이 중복된 숫자를 돌려준다.
@@ -720,24 +757,16 @@ def main():
     # test_fullhouse()
     # test_flush()
     # test_fourcards()
-
-    # player_names = ["A", "B", "C", "D"]
-    # manager = Manager(player_names)
-    # manager.myDeck.shuffle()
-    # manager.card_distribute()
-    #
-    # manager.show_players_deck()
-    # print(manager.find_first().name)
-    #
-    # _player = Player("E")
-    # _player.myDeck.fill_full()
-    # _player.try_discard()
     # test_card_sort()
     # test_is_high_straight()
     # test_get_same_card_num()
-    test_check_submit()
+    # test_check_submit()
     # pass
 
+    players = ["A", "B", "C", "D"]
+    manager = Manager(players)
+    manager.game_start()
+    manager.game_run()
 
 if __name__ == '__main__':
     main()
