@@ -107,6 +107,7 @@ class Manager:
 
         self.my_table = Table()
         self.current_player_index = 0
+        self.pass_count = 3
 
     def find_player(self, name):
         for p in self.players:
@@ -139,10 +140,25 @@ class Manager:
             print("player cards: ")
             player.myDeck.print_all()
 
-            # TODO: 플레이어의 카드 제출 여부 검사(Pass)
-            # TODO: 모두 pass 하면 마지막 player가 선이 된다.
-            while True:
-                _cards = player.get_right_cards()
+            # 카드 제출 검사
+            while True:                
+                # 다른 플레이어가 모두 패스하였는가?
+                if self.pass_count == len(self.players) - 1:
+                    self.my_table.clear()
+                    print("now you'r first")
+                    self.pass_count = 0
+                    is_first = True
+                else:
+                    is_first = False
+
+                # 올바른 카드(족보) 입력 받기(또는 패스 체크)
+                _cards = player.get_right_cards(is_first)
+                # 패스 프로세스
+                if not _cards:
+                    self.pass_count += 1
+                    break
+
+                # 기존보다 높은 패인지 검사
                 if self.my_table.check_submit(_cards):
                     self.my_table.myDeck.replace(_cards)
                     player.myDeck.deck = subtract_list(player.myDeck.deck, _cards)
@@ -151,6 +167,7 @@ class Manager:
                     print("submission failed!")
                     # 카드 제출 여부 재검사(Pass)
 
+            # 다음 플레이어로
             self.current_player_index += 1
             if self.current_player_index >= len(self.players):
                 self.current_player_index = 0
@@ -189,14 +206,22 @@ class Player:
         return _card in self.myDeck.deck
 
     # 바른 인덱스들을 입력받을 때까지 loop
-    def get_right_cards(self):
+    def get_right_cards(self, is_first=False):
         _cards = []
         is_success = True
 
         while True:
             _cards.clear()
-            _str = input("제출할 카드 인덱스(ex: 1 2 3 4 5)를 입력: ")
-            indexes = _str.split(" ")
+
+            if is_first:
+                _str = input("제출할 카드 인덱스(ex: 1 2 3 4 5)를 입력: ")
+                indexes = _str.split(" ")
+
+            else:
+                _str = input("제출할 카드 인덱스(ex: 1 2 3 4 5)를 입력(패스 시 'p' 입력): ")
+                indexes = _str.split(" ")
+                if indexes[0] == "p":
+                    return []
 
             for index in indexes:
                 # int 타입 변환 실패 시 처음으로, 인덱스 범위를 벗어나도 처음으로
@@ -255,6 +280,8 @@ class Table:
     def check_rule2(self, _cards):
         return Rule.is_high(self.myDeck.deck, _cards)
 
+    def clear(self):
+        self.myDeck.remove_all()
 
 class Rule:
     # 2장의 카드 리스트를 받는다
@@ -421,7 +448,6 @@ class Rule:
         cards_b.sort(key=lambda x: x.point, reverse=True)
 
         # 한장씩 높은 순서대로 비교
-        # TODO: 높은 카드 순서대로 비교
         # 1/2/3 일 경우
         if length < 5:
             if cards_a[0] < cards_b[0]:
