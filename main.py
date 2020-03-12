@@ -321,6 +321,7 @@ class Table:
         return False
 
     # 규칙2 검사
+    # TODO: 플러시 경우 버그 발견
     def check_rule2(self, _cards):
         return Rule.is_high(self.myDeck.deck, _cards)
 
@@ -464,6 +465,7 @@ class Rule:
     @staticmethod
     def is_high_flush(cards_a, cards_b):
 
+        # TODO: 케이스를 만들어 테스트 해보자.
         # 문양만 가지고 먼저 확인한다.
         # 문양이 같다면 숫자를 비교
         if cards_a[0].symbol < cards_b[0].symbol:
