@@ -94,6 +94,13 @@ class Deck:
         self.deck.clear()
         self.add_cards(cards)
 
+    def sort_symbol(self):
+        self.sort_number()
+        self.deck.sort(key=lambda x: symbols.index(x.symbol))
+
+    def sort_number(self):
+        self.deck.sort(key=lambda x: numbers.index(x.number))
+
 
 class Manager:
     # 플레이어 이름들의 배열을 받음
@@ -107,7 +114,9 @@ class Manager:
 
         self.my_table = Table()
         self.current_player_index = 0
-        self.pass_count = 3
+        self.pass_count = 0
+        self.player_rank = 1  # 다음 플레이어의 등수
+        self.rank = []
 
     def find_player(self, name):
         for p in self.players:
@@ -143,20 +152,28 @@ class Manager:
             # 카드 제출 검사
             while True:                
                 # 다른 플레이어가 모두 패스하였는가?
-                if self.pass_count == len(self.players) - 1:
+                if self.pass_count == 0:
                     self.my_table.clear()
                     print("now you'r first")
-                    self.pass_count = 0
+                    self.pass_count = len(self.players)-1
                     is_first = True
                 else:
                     is_first = False
 
                 # 올바른 카드(족보) 입력 받기(또는 패스 체크)
                 _cards = player.get_right_cards(is_first)
+
+                # 카드 정렬 요청
+                if _cards == 's' or _cards == 'n':
+                    player.myDeck.print_all()
+                    continue
+
                 # 패스 프로세스
                 if not _cards:
-                    self.pass_count += 1
+                    self.pass_count -= 1
                     break
+                else:
+                    self.pass_count = len(self.players) - 1
 
                 # 기존보다 높은 패인지 검사
                 if self.my_table.check_submit(_cards):
@@ -164,13 +181,32 @@ class Manager:
                     player.myDeck.deck = subtract_list(player.myDeck.deck, _cards)
                     break
                 else:
-                    print("submission failed!")
-                    # 카드 제출 여부 재검사(Pass)
+                    print("테이블의 패보다 약한 패는 제출할 수 없습니다!")
+
+            # 플레이어 승리 체크
+            if not player.myDeck.deck:
+                self.player_win(self.current_player_index)
 
             # 다음 플레이어로
             self.current_player_index += 1
             if self.current_player_index >= len(self.players):
                 self.current_player_index = 0
+
+    # 플레이어 승리(게임 나가기)
+    def player_win(self, player_index):
+        self.rank.append(self.players[player_index].namea)
+        print(self.players[self.current_player_index].name + " win! rank: " + str(self.player_rank))
+        self.player_rank += 1
+        del self.players[self.current_player_index]
+
+        # 마지막 플레이어 하나만 남았을 때
+        if len(self.players) == 1:
+            print("GAME OVER!!!")
+            self.rank.append(self.players[0].namea)
+            for i, name in enumerate(self.rank):
+                print("rank: {} {}".format(i+1, name))
+
+            exit(0)
 
     # 각 플레이어에게 차례대로 카드 분배
     def card_distribute(self):
@@ -209,19 +245,27 @@ class Player:
     def get_right_cards(self, is_first=False):
         _cards = []
         is_success = True
+        indexes = []
 
         while True:
             _cards.clear()
 
             if is_first:
-                _str = input("제출할 카드 인덱스(ex: 1 2 3 4 5)를 입력: ")
+                _str = input("제출할 카드 인덱스(ex: 1 2 3 4 5)를 입력 (정렬: 's', 'n'): ")
                 indexes = _str.split(" ")
 
             else:
-                _str = input("제출할 카드 인덱스(ex: 1 2 3 4 5)를 입력(패스 시 'p' 입력): ")
+                _str = input("제출할 카드 인덱스(ex: 1 2 3 4 5)를 입력(패스 시 'p' 입력) (정렬: 's', 'n'): ")
                 indexes = _str.split(" ")
                 if indexes[0] == "p":
                     return []
+
+            if indexes[0] == 's':
+                self.myDeck.sort_symbol()
+                return 's'
+            if indexes[0] == 'n':
+                self.myDeck.sort_number()
+                return 'n'
 
             for index in indexes:
                 # int 타입 변환 실패 시 처음으로, 인덱스 범위를 벗어나도 처음으로
@@ -793,6 +837,7 @@ def main():
     manager = Manager(players)
     manager.game_start()
     manager.game_run()
+
 
 if __name__ == '__main__':
     main()
