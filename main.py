@@ -328,6 +328,15 @@ class Table:
     def clear(self):
         self.myDeck.remove_all()
 
+
+class VirtualPlayer:
+
+    # 스트레이트가 존재하는가
+    @staticmethod
+    def check_straight(cards):
+        pass
+
+
 class Rule:
     # 2장의 카드 리스트를 받는다
     @staticmethod
@@ -572,6 +581,19 @@ def check_duplicate(listOfElems):
         if listOfElems.count(elem) > 1:
             return True
     return False
+
+
+# start_card 보다 큰 카드중 제일 작은 카드를 구한다.
+def get_min_card(l,  start_card=None):
+    result = None
+
+    # find at l, greater then start
+    for card in l:
+        if start_card is None or card > start_card:
+            if result is None or card < result:
+                result = card
+
+    return result
 
 
 def test_gt():
@@ -823,6 +845,15 @@ def test_check_submit():
     print(result)
 
 
+def test_get_min():
+
+    cards_a = [Card('♣', 'K'), Card('♣', 'Q'), Card('♣', '10'), Card('♣', 'A'), Card('♣', 'J')]
+    cards_b = [Card('♣', '2'), Card('♣', '5'), Card('♣', '3'), Card('♣', '4'), Card('♣', '6')]
+    result = get_min_card(cards_a, Card('♣', 'K'))
+
+    print(result)
+
+
 def main():
     # test_gt()
     # test_straight()
@@ -834,11 +865,12 @@ def main():
     # test_get_same_card_num()
     # test_check_submit()
     # pass
+    test_get_min()
 
-    players = ["A", "B", "C", "D"]
-    manager = Manager(players)
-    manager.game_start()
-    manager.game_run()
+    # players = ["A", "B", "C", "D"]
+    # manager = Manager(players)
+    # manager.game_start()
+    # manager.game_run()
 
 
 if __name__ == '__main__':
