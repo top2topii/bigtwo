@@ -3,6 +3,7 @@ import random
 symbols = ['♣', '♦', '♥', '♠']
 numbers = ['3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A', '2']
 real_nums = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K']
+staight_nums = real_nums + ['A']
 
 
 class Card:
@@ -24,6 +25,10 @@ class Card:
         if self.symbol == other.symbol:
             return True
         return False
+
+    # 순수한 숫자로 따지다면 더 큰가?
+    def greater(self, other):
+        return staight_nums.index(self.number) > staight_nums.index(other.number)
 
     def __str__(self):
         return self.symbol + ':' + self.number
@@ -331,10 +336,43 @@ class Table:
 
 class VirtualPlayer:
 
-    # 스트레이트가 존재하는가
+    # 최대한
     @staticmethod
-    def check_straight(cards):
-        pass
+    def check_straight(cards, start_card=None):
+        result_cards = []
+
+        min_card = get_min_card(cards)
+        if start_card:
+            min_card = start_card
+
+        if min_card:
+            result_cards.append(min_card)
+            while len(result_cards) < 5:
+                min_card = find_next_card(cards, min_card)
+                if min_card:
+                    # 다음 카드를 찾으면
+                    result_cards.append(min_card)
+                else:
+                    # 찾은 카드의 리스트를 돌려준다. => 추후에 그 이후의 카드로 연속성 검사를 진행하려고.
+                    return result_cards
+
+            return result_cards
+
+        else:
+            return result_cards
+
+    @staticmethod
+    def is_straight(cards):
+
+        if find_card_by_number(cards, 'A'):
+            for i in cards:
+                res = VirtualPlayer.check_straight(cards, i)
+                if len(res) == 5:
+                    return res
+
+            return []
+        else:
+            return VirtualPlayer.check_straight(cards)
 
 
 class Rule:
@@ -583,17 +621,42 @@ def check_duplicate(listOfElems):
     return False
 
 
-# start_card 보다 큰 카드중 제일 작은 카드를 구한다.
+# start_card 보다 큰 카드중 숫자가 제일 작은 카드를 구한다.
 def get_min_card(l,  start_card=None):
     result = None
 
     # find at l, greater then start
     for card in l:
-        if start_card is None or card > start_card:
-            if result is None or card < result:
+        if start_card is None or card.greater(start_card):
+            if result is None or result.greater(card):
                 result = card
 
     return result
+
+
+# 특정 숫자의 카드를 찾는다
+def find_card_by_number(l, num_str):
+
+    for card in l:
+        if card.number == num_str:
+            return card
+    return None
+
+
+# 다음 숫자 카드 찾기
+def find_next_card(l, start_card):
+    result = None
+
+    try:
+        # 다음 숫자 카드 찾기
+        next_card_str = staight_nums[staight_nums.index(start_card.number) + 1]
+
+    except IndexError:
+        return None
+
+    return find_card_by_number(l, next_card_str)
+
+
 
 
 def test_gt():
@@ -849,9 +912,39 @@ def test_get_min():
 
     cards_a = [Card('♣', 'K'), Card('♣', 'Q'), Card('♣', '10'), Card('♣', 'A'), Card('♣', 'J')]
     cards_b = [Card('♣', '2'), Card('♣', '5'), Card('♣', '3'), Card('♣', '4'), Card('♣', '6')]
-    result = get_min_card(cards_a, Card('♣', 'K'))
+    # result = get_min_card(cards_a, Card('♣', 'K'))
+    result = get_min_card(cards_b)
+    print(result)
+
+    result = get_min_card(cards_a)
+    print(result)
+
+def test_find_next():
+
+    cards_a = [Card('♣', 'K'), Card('♣', 'Q'), Card('♣', '10'), Card('♣', 'A'), Card('♣', 'J')]
+    cards_b = [Card('♣', '2'), Card('♣', '5'), Card('♣', '3'), Card('♣', '4'), Card('♣', '6')]
+    result = find_next_card(cards_b, Card('♣', '2'))
 
     print(result)
+
+
+def test_get_straight():
+
+    cards_b = [Card('♣', '2'), Card('♣', '5'), Card('♣', '3'), Card('♣', '4'), Card('♣', 'A')]
+    cards = VirtualPlayer.is_straight(cards_b)
+    print_cards(cards)
+
+    cards_a = [Card('♣', 'K'), Card('♣', 'Q'), Card('♣', '10'), Card('♣', 'A'), Card('♣', 'J')]
+    cards = VirtualPlayer.is_straight(cards_a)
+    print_cards(cards)
+
+
+def print_cards(cards):
+
+    print('--------------')
+    for a in cards:
+        print(a, end="  ")
+    print()
 
 
 def main():
@@ -865,7 +958,9 @@ def main():
     # test_get_same_card_num()
     # test_check_submit()
     # pass
-    test_get_min()
+    # test_get_min()
+    # test_find_next()
+    test_get_straight()
 
     # players = ["A", "B", "C", "D"]
     # manager = Manager(players)
