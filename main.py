@@ -350,15 +350,16 @@ class VirtualPlayer:
 
         for c in cards:
             result_cards = []  # 연속된 카드를 담는 리스트
-            a_card = c
-            result_cards.append(a_card)
+            a_card_l = find_card_by_number(cards, c.number)
+            result_cards.append(a_card_l)
 
             for d in cards:
-                a_card = find_next_card(cards, a_card)
+                a_card_l = find_next_card(cards, a_card_l[0])
 
-                if a_card:  # 다음 카드를 찾으면
-                    result_cards.append(a_card)
-                    if len(result_cards) == 5 and Rule.check_straight(result_cards):
+                if a_card_l:  # 다음 카드를 찾으면
+                    result_cards.append(a_card_l)
+                    # if len(result_cards) == 5 and Rule.check_straight(result_cards):
+                    if len(result_cards) == 5:
                         ll.append(result_cards)
                         break
                 else:
@@ -636,16 +637,16 @@ def get_min_card(l,  start_card=None):
 # 특정 숫자의 카드를 찾는다
 def find_card_by_number(l, num_str):
 
+    result = []
+
     for card in l:
         if card.number == num_str:
-            return card
-    return None
+            result.append(card)
+    return result
 
 
 # 다음 숫자 카드 찾기
 def find_next_card(l, start_card):
-    result = None
-
     try:
         # 다음 숫자 카드 찾기
         next_card_str = staight_nums[staight_nums.index(start_card.number) + 1]
@@ -938,16 +939,19 @@ def test_get_straights():
 def print_cards_l(cards_l, title=''):
 
     print('{}--------------'.format(title))
-    for a in cards_l:
-        print_cards(a)
+    for al in cards_l:
+        print('{', end="")
+        for cl in al:
+            print_cards(cl)
+        print('}')
     print()
 
 
 def print_cards(cards):
-
+    print('[', end="")
     for a in cards:
-        print(a, end="  ")
-    print()
+        print(a, end="")
+    print(']', end=",")
 
 
 def main():
