@@ -104,7 +104,7 @@ class Deck:
         self.deck.sort(key=lambda x: symbols.index(x.symbol))
 
     def sort_number(self):
-        self.deck.sort(key=lambda x: numbers.index(x.number))
+        self.deck.sort(key=lambda x: real_nums.index(x.number))
 
 
 class Manager:
@@ -171,6 +171,9 @@ class Manager:
                 # 카드 정렬 요청
                 if _cards == 's' or _cards == 'n':
                     player.myDeck.print_all()
+                    continue
+
+                if _cards == 'c':
                     continue
 
                 # 패스 프로세스
@@ -256,11 +259,11 @@ class Player:
             _cards.clear()
 
             if is_first:
-                _str = input("제출할 카드 인덱스(ex: 1 2 3 4 5)를 입력 (정렬: 's', 'n'): ")
+                _str = input("제출할 카드 인덱스(ex: 1 2 3 4 5)를 입력 (정렬:s, n) (c): ")
                 indexes = _str.split(" ")
 
             else:
-                _str = input("제출할 카드 인덱스(ex: 1 2 3 4 5)를 입력(패스 시 'p' 입력) (정렬: 's', 'n'): ")
+                _str = input("제출할 카드 인덱스(ex: 1 2 3 4 5)를 입력(패스:p) (정렬:s, n) (c): ")
                 indexes = _str.split(" ")
                 if indexes[0] == "p":
                     return []
@@ -271,6 +274,10 @@ class Player:
             if indexes[0] == 'n':
                 self.myDeck.sort_number()
                 return 'n'
+            if indexes[0] == 'c':
+                lres = VirtualPlayer.get_straight_list(self.myDeck.deck)
+                print_cards_l(lres, '스트레이트')
+                return 'c'
 
             for index in indexes:
                 # int 타입 변환 실패 시 처음으로, 인덱스 범위를 벗어나도 처음으로
@@ -336,43 +343,35 @@ class Table:
 
 class VirtualPlayer:
 
-    # 최대한
+    # 스트레이트 대상만 리스트로 만들어 돌려준다.
     @staticmethod
-    def check_straight(cards, start_card=None):
-        result_cards = []
+    def get_straight_list(cards):
+        ll = []                 # 스트레이트 리스트의 리스트
 
-        min_card = get_min_card(cards)
-        if start_card:
-            min_card = start_card
+        for c in cards:
+            result_cards = []  # 연속된 카드를 담는 리스트
+            a_card = c
+            result_cards.append(a_card)
 
-        if min_card:
-            result_cards.append(min_card)
-            while len(result_cards) < 5:
-                min_card = find_next_card(cards, min_card)
-                if min_card:
-                    # 다음 카드를 찾으면
-                    result_cards.append(min_card)
+            for d in cards:
+                a_card = find_next_card(cards, a_card)
+
+                if a_card:  # 다음 카드를 찾으면
+                    result_cards.append(a_card)
+                    if len(result_cards) == 5 and Rule.check_straight(result_cards):
+                        ll.append(result_cards)
+                        break
                 else:
-                    # 찾은 카드의 리스트를 돌려준다. => 추후에 그 이후의 카드로 연속성 검사를 진행하려고.
-                    return result_cards
+                    break
 
-            return result_cards
+        return ll
 
-        else:
-            return result_cards
-
+    # 숫자가 연속된 카드가 5장 이상이면 스트레이트
     @staticmethod
     def is_straight(cards):
-
-        if find_card_by_number(cards, 'A'):
-            for i in cards:
-                res = VirtualPlayer.check_straight(cards, i)
-                if len(res) == 5:
-                    return res
-
-            return []
-        else:
-            return VirtualPlayer.check_straight(cards)
+        lres = VirtualPlayer.get_straight_list(cards)
+        if len(lres) > 0:
+            return True
 
 
 class Rule:
@@ -657,10 +656,8 @@ def find_next_card(l, start_card):
     return find_card_by_number(l, next_card_str)
 
 
-
-
 def test_gt():
-    def print_cards(a, b):
+    def printcards(a, b):
         print('---------------------------------')
         print('aCard:' + str(a) + '\t' + 'bCard:' + str(b))
 
@@ -672,22 +669,22 @@ def test_gt():
     # 문양 같음, 숫자 다름
     a_card = Card(symbols[0], numbers[9])
     b_card = Card(symbols[0], numbers[3])
-    print_cards(a_card, b_card)
+    printcards(a_card, b_card)
 
     # 문양 다름, 숫자 다름
     a_card = Card(symbols[1], numbers[6])
     b_card = Card(symbols[2], numbers[4])
-    print_cards(a_card, b_card)
+    printcards(a_card, b_card)
 
     # 문양 다름, 숫자 같음
     a_card = Card(symbols[1], numbers[10])
     b_card = Card(symbols[2], numbers[10])
-    print_cards(a_card, b_card)
+    printcards(a_card, b_card)
 
     # 문양 같음, 숫자 같음
     a_card = Card(symbols[3], numbers[4])
     b_card = Card(symbols[3], numbers[4])
-    print_cards(a_card, b_card)
+    printcards(a_card, b_card)
 
 
 def test_straight():
@@ -919,6 +916,7 @@ def test_get_min():
     result = get_min_card(cards_a)
     print(result)
 
+
 def test_find_next():
 
     cards_a = [Card('♣', 'K'), Card('♣', 'Q'), Card('♣', '10'), Card('♣', 'A'), Card('♣', 'J')]
@@ -928,20 +926,25 @@ def test_find_next():
     print(result)
 
 
-def test_get_straight():
+def test_get_straights():
+    table = [Card('♥', '6'), Card('♣', 'K'), Card('♠', '2'), Card('♦', '4'), Card('♦', 'A'), Card('♣', '6'),
+             Card('♦', 'K'), Card('♦', '8'), Card('♥', 'K'), Card('♦', '10'), Card('♦', '5'), Card('♠', 'A'),
+             Card('♥', '3')]
 
-    cards_b = [Card('♣', '2'), Card('♣', '5'), Card('♣', '3'), Card('♣', '4'), Card('♣', 'A')]
-    cards = VirtualPlayer.is_straight(cards_b)
-    print_cards(cards)
+    lres = VirtualPlayer.get_straight_list(table)
+    print_cards_l(lres)
 
-    cards_a = [Card('♣', 'K'), Card('♣', 'Q'), Card('♣', '10'), Card('♣', 'A'), Card('♣', 'J')]
-    cards = VirtualPlayer.is_straight(cards_a)
-    print_cards(cards)
+
+def print_cards_l(cards_l, title=''):
+
+    print('{}--------------'.format(title))
+    for a in cards_l:
+        print_cards(a)
+    print()
 
 
 def print_cards(cards):
 
-    print('--------------')
     for a in cards:
         print(a, end="  ")
     print()
@@ -960,12 +963,12 @@ def main():
     # pass
     # test_get_min()
     # test_find_next()
-    test_get_straight()
+    # test_get_straights()
 
-    # players = ["A", "B", "C", "D"]
-    # manager = Manager(players)
-    # manager.game_start()
-    # manager.game_run()
+    players = ["A", "B", "C", "D"]
+    manager = Manager(players)
+    manager.game_start()
+    manager.game_run()
 
 
 if __name__ == '__main__':
