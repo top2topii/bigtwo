@@ -349,8 +349,18 @@ class VirtualPlayer:
         ll = []                 # 스트레이트 리스트의 리스트
 
         for c in cards:
+            is_same = False
             result_cards = []  # 연속된 카드를 담는 리스트
             a_card_l = find_card_by_number(cards, c.number)
+
+            # 같은 숫자로 시작하는 스트레이트가 이미 있는지 확인
+            for a in ll:
+                if c.number == a[0][0].number:
+                    is_same = True
+                    break
+            if is_same:
+                continue
+
             result_cards.append(a_card_l)
 
             for d in cards:
@@ -358,6 +368,12 @@ class VirtualPlayer:
 
                 if a_card_l:  # 다음 카드를 찾으면
                     result_cards.append(a_card_l)
+
+                    # A 카드로 시작하거나 A로 끝이 나지 않는 A가 포함된 스트레이트는 가짜.
+                    # ex) K A 1 2 3
+                    if a_card_l[0].number == 'A' and not (len(result_cards) == 1 or len(result_cards) == 5):
+                        break;
+
                     # if len(result_cards) == 5 and Rule.check_straight(result_cards):
                     if len(result_cards) == 5:
                         ll.append(result_cards)
