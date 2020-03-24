@@ -173,7 +173,7 @@ class Manager:
                     player.myDeck.print_all()
                     continue
 
-                if _cards == 'c':
+                if _cards == 'h':
                     continue
 
                 # 패스 프로세스
@@ -259,11 +259,11 @@ class Player:
             _cards.clear()
 
             if is_first:
-                _str = input("제출할 카드 인덱스(ex: 1 2 3 4 5)를 입력 (정렬:s, n) (c): ")
+                _str = input("제출할 카드 인덱스(ex: 1 2 3 4 5)를 입력 (정렬:s, n) (h): ")
                 indexes = _str.split(" ")
 
             else:
-                _str = input("제출할 카드 인덱스(ex: 1 2 3 4 5)를 입력(패스:p) (정렬:s, n) (c): ")
+                _str = input("제출할 카드 인덱스(ex: 1 2 3 4 5)를 입력(패스:p) (정렬:s, n) (h): ")
                 indexes = _str.split(" ")
                 if indexes[0] == "p":
                     return []
@@ -274,12 +274,20 @@ class Player:
             if indexes[0] == 'n':
                 self.myDeck.sort_number()
                 return 'n'
-            if indexes[0] == 'c':
+            if indexes[0] == 'h':
                 lres = VirtualPlayer.get_straight_list(self.myDeck.deck)
                 print_cards_l(lres, '스트레이트')
+
                 lres = VirtualPlayer.get_flush(self.myDeck.deck)
                 print_cards_l(lres, '플러쉬')
-                return 'c'
+
+                lres = VirtualPlayer.get_fullhouse(self.myDeck.deck)
+                print_cards_l(lres, '풀하우스')
+
+                lres = VirtualPlayer.get_fourcards(self.myDeck.deck)
+                print_cards_l(lres, '포카드')
+
+                return 'h'
 
             for index in indexes:
                 # int 타입 변환 실패 시 처음으로, 인덱스 범위를 벗어나도 처음으로
@@ -371,20 +379,14 @@ class VirtualPlayer:
                 if a_card_l:  # 다음 카드를 찾으면
                     result_cards.append(a_card_l)
 
-                    # A 카드로 시작하거나 A로 끝이 나지 않는 A가 포함된 스트레이트는 가짜.
-                    # ex) K A 1 2 3
-                    if a_card_l[0].number == 'A' and not (len(result_cards) == 1 or len(result_cards) == 5):
-                        break;
-
-                    # if len(result_cards) == 5 and Rule.check_straight(result_cards):
-                    if len(result_cards) == 5:
+                    temp_cards = [x[0] for x in result_cards]   # rule 검사를 위한 임시 카드 리스트
+                    if len(result_cards) == 5 and Rule.check_straight(temp_cards):
                         ll.append(result_cards)
                         break
                 else:
                     break
 
         return ll
-
 
     @staticmethod
     def get_flush(cards):
@@ -396,13 +398,35 @@ class VirtualPlayer:
 
         return ll
 
-
     # 숫자가 연속된 카드가 5장 이상이면 스트레이트
     @staticmethod
     def is_straight(cards):
         lres = VirtualPlayer.get_straight_list(cards)
         if len(lres) > 0:
             return True
+
+    @staticmethod
+    def get_fullhouse(cards):
+        ll = []
+        lres = get_cards_samenumber(cards)
+
+        # 동일한 카드의 장수가 2이상이것과 3이상인것이 동시에 존재해야만 FullHouse
+        if len(lres) > 1 and len(lres[-1]) > 2:
+            ll.append(lres)
+            return ll
+        return []
+
+    @staticmethod
+    def get_fourcards(cards):
+        ll = []
+        lres = get_cards_samenumber(cards)
+
+        # 동일한 카드의 장수가 4장인것이 있어야 포카드
+        for a in lres:
+            if len(a) == 4:
+                ll.append(a)
+
+        return ll
 
 
 class Rule:
@@ -662,6 +686,24 @@ def get_min_card(l,  start_card=None):
                 result = card
 
     return result
+
+
+# 같은 번호들의 목록을 구한다.
+def get_cards_samenumber(l):
+    res = []
+    mydic = {}
+    for c in l:
+        key = c.number
+        if key in mydic:
+            mydic[key] += 1
+        else:
+            mydic[key] = 1
+
+    for k, v in sorted(mydic.items(), key=(lambda x:x[1])):
+        if v > 1:
+            res.append(find_card_by_number(l, k))
+
+    return res
 
 
 # 특정 숫자의 카드를 찾는다
@@ -979,17 +1021,26 @@ def test_find_next():
 
 
 def test_get_straights():
-    table = [Card('♥', '6'), Card('♣', 'K'), Card('♠', '2'), Card('♦', '4'), Card('♦', 'A'), Card('♣', '6'),
-             Card('♦', 'K'), Card('♦', '8'), Card('♥', 'K'), Card('♦', '10'), Card('♦', '5'), Card('♠', 'A'),
-             Card('♥', '3')]
+    t = [Card('♥', '6'), Card('♣', 'K'), Card('♠', '2'), Card('♦', '4'), Card('♦', 'A'), Card('♣', '6'),
+         Card('♦', 'K'), Card('♦', '8'), Card('♥', 'K'), Card('♦', '10'), Card('♦', '5'), Card('♠', 'A'),
+         Card('♥', '3')]
 
-    lres = VirtualPlayer.get_straight_list(table)
-    print_cards_l(lres)
+    lres = VirtualPlayer.get_straight_list(t)
+    print_cards_l(lres, '스트레이트')
+
+
+def test_get_fourcards():
+    t = [Card('♠', '3'), Card('♠', 'J'), Card('♣', '3'), Card('♥', 'J'), Card('♥', '3'), Card('♦', '6'),
+         Card('♠', '5'), Card('♦', '5'), Card('♠', '8'), Card('♠', '4'), Card('♠', '6'), Card('♦', '3'),
+         Card('♣', '10')]
+
+    lres = VirtualPlayer.get_fourcards(t)
+    print_cards_l(lres, '포카')
 
 
 def print_cards_l(cards_l, title=''):
 
-    if not len(cards_l) > 0:
+    if not cards_l or not len(cards_l) > 0:
         return
 
     print('{}--------------'.format(title))
@@ -1001,6 +1052,7 @@ def print_cards_l(cards_l, title=''):
                 print_a_card(cl)
             else:
                 print_cards(cl)
+                print('\b', end="")
         print('}')
     print()
 
@@ -1030,6 +1082,7 @@ def main():
     # test_get_min()
     # test_find_next()
     # test_get_straights()
+    # test_get_fourcards()
 
     players = ["A", "B", "C", "D"]
     manager = Manager(players)
