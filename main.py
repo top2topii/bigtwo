@@ -202,7 +202,7 @@ class Manager:
 
     # 플레이어 승리(게임 나가기)
     def player_win(self, player_index):
-        self.rank.append(self.players[player_index].namea)
+        self.rank.append(self.players[player_index].name)
         print(self.players[self.current_player_index].name + " win! rank: " + str(self.player_rank))
         self.player_rank += 1
         del self.players[self.current_player_index]
@@ -210,7 +210,7 @@ class Manager:
         # 마지막 플레이어 하나만 남았을 때
         if len(self.players) == 1:
             print("GAME OVER!!!")
-            self.rank.append(self.players[0].namea)
+            self.rank.append(self.players[0].name)
             for i, name in enumerate(self.rank):
                 print("rank: {} {}".format(i+1, name))
 
