@@ -277,6 +277,8 @@ class Player:
             if indexes[0] == 'c':
                 lres = VirtualPlayer.get_straight_list(self.myDeck.deck)
                 print_cards_l(lres, '스트레이트')
+                lres = VirtualPlayer.get_flush(self.myDeck.deck)
+                print_cards_l(lres, '플러쉬')
                 return 'c'
 
             for index in indexes:
@@ -382,6 +384,18 @@ class VirtualPlayer:
                     break
 
         return ll
+
+
+    @staticmethod
+    def get_flush(cards):
+        ll = []
+
+        for sym in symbols:
+            if count_symbol(cards, sym) >= 5:
+                ll.append(get_samecards_symbol(cards, sym))
+
+        return ll
+
 
     # 숫자가 연속된 카드가 5장 이상이면 스트레이트
     @staticmethod
@@ -673,6 +687,27 @@ def find_next_card(l, start_card):
     return find_card_by_number(l, next_card_str)
 
 
+# 같은 무늬의 카드가 몇장인가?
+def count_symbol(cards, symbol):
+
+    count = 0
+    for c in cards:
+        if c.symbol == symbol:
+            count += 1
+    return count
+
+
+# 같은 무늬 카드를 고른다.
+def get_samecards_symbol(cards, symbol):
+    res = []
+
+    for c in cards:
+        if c.symbol == symbol:
+            res.append(c)
+
+    return res
+
+
 def test_gt():
     def printcards(a, b):
         print('---------------------------------')
@@ -954,11 +989,18 @@ def test_get_straights():
 
 def print_cards_l(cards_l, title=''):
 
+    if not len(cards_l) > 0:
+        return
+
     print('{}--------------'.format(title))
     for al in cards_l:
         print('{', end="")
         for cl in al:
-            print_cards(cl)
+
+            if isinstance(cl, Card):
+                print_a_card(cl)
+            else:
+                print_cards(cl)
         print('}')
     print()
 
@@ -968,6 +1010,10 @@ def print_cards(cards):
     for a in cards:
         print(a, end="")
     print(']', end=",")
+
+
+def print_a_card(card):
+    print(card, end="")
 
 
 def main():
